@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "janus.acquisition/1",
+  "title": "Janus acquisition manifest (manifest.json)",
+  "type": "object",
+  "required": ["schema", "tool", "created", "target", "host", "items", "warnings", "log", "chain_head"],
+  "properties": {
+    "schema": { "const": "janus.acquisition/1" },
+    "tool": { "type": "object", "required": ["name", "version"], "properties": { "name": { "type": "string" }, "version": { "type": "string" } } },
+    "created": { "type": "string", "format": "date-time" },
+    "examiner": { "type": ["string", "null"] },
+    "case": { "type": ["string", "null"] },
+    "note": { "type": ["string", "null"] },
+    "target": { "type": "object", "properties": { "kind": { "enum": ["raspberry-pi"] }, "address": { "type": "string", "description": "Pi host[:port] / user@host" } } },
+    "host": { "type": "object", "description": "the computer that ran janus", "properties": { "hostname": { "type": "string" }, "platform": { "type": "string" }, "node": { "type": "string" } } },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["path", "kind", "sha256", "bytes", "acquired_at"],
+        "properties": {
+          "path": { "type": "string", "description": "relative to the folder, forward slashes" },
+          "kind": { "enum": ["file", "stream-log", "readings-csv", "pi-diagnostics", "pi-log-list", "pi-log-raw", "pi-log-text", "pi-file", "ssh-command", "ssh-file"] },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "bytes": { "type": "integer", "minimum": 0 },
+          "acquired_at": { "type": "string", "format": "date-time" },
+          "source": { "type": ["string", "null"], "description": "URL or the exact SSH command" },
+          "note": { "type": ["string", "null"] },
+          "derived_from": { "type": ["string", "null"], "description": "path of the item this was parsed from (a .csv from its .log)" }
+        }
+      }
+    },
+    "warnings": { "type": "array", "items": { "type": "string" }, "description": "things the collection noticed: gaps, missing sensors, refused logs, power flags the Pi reported about itself" },
+    "log": {
+      "type": "array", "description": "hash chain: h = sha256(q|s|t|a|p); the first q is the string 'genesis'",
+      "items": { "type": "object", "required": ["s", "t", "a", "p", "q", "h"], "properties": { "s": { "type": "integer" }, "t": { "type": "string" }, "a": { "enum": ["acquisition-started", "item", "warning", "event"] }, "p": { "type": "string" }, "q": { "type": "string" }, "h": { "type": "string" } } }
+    },
+    "chain_head": { "type": ["string", "null"], "description": "h of the last log entry. Record it somewhere other than this folder." }
+  }
+}

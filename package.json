@@ -1,0 +1,10 @@
+{
+  "name": "janus-extract",
+  "version": "2.3.0",
+  "description": "Read-only Raspberry Pi extraction into a hashed, verifiable acquisition folder.",
+  "bin": { "janus": "bin/janus.js" },
+  "main": "lib/index.js",
+  "engines": { "node": ">=18" },
+  "scripts": { "test": "node test/test.js" },
+  "license": "MIT"
+}

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>JANUS — Field Unit</title>
+<meta name="description" content="JANUS Field Unit: a local, read-only acquisition console for Raspberry Pi telemetry, system logs, and shared files.">
+<meta name="color-scheme" content="dark">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="janus-token" content="__JANUS_TOKEN__">
+<style>
+/*CSS*/
+</style>
+</head>
+<body>
+<div class="mat">
+ <div class="unit" id="unit" data-shell="grey">
+  <i class="internals" aria-hidden="true"></i>
+  <button class="power" data-k="power" aria-label="Power switch" title="Power"><i></i></button>
+  <span class="edge-l" aria-hidden="true"></span><span class="edge-r" aria-hidden="true"></span>
+  <span class="offon" aria-hidden="true"><b>&#9664;</b>OFF&middot;ON</span>
+  <div class="bezel">
+   <div class="bz-label"><i></i><span>FIELD UNIT &nbsp;&middot;&nbsp; JN-1 &nbsp;&middot;&nbsp; READ ONLY</span><i></i></div>
+   <div class="led-wrap"><i class="led" id="led"></i><span>POWER</span></div>
+   <div class="lcd" id="lcd">
+    <canvas id="cv" width="160" height="144" aria-label="Janus screen"></canvas>
+    <div class="glass"></div>
+   </div>
+  </div>
+  <div class="mark"><b>JANUS</b><span>field unit<br>model JN-1</span></div>
+  <div class="dpad" role="group" aria-label="Direction pad">
+   <button class="u" data-k="up" aria-label="Up"></button><button class="l" data-k="left" aria-label="Left"></button>
+   <i class="hub"></i><button class="r" data-k="right" aria-label="Right"></button><button class="d" data-k="down" aria-label="Down"></button>
+  </div>
+  <div class="ab"><div class="well"><button data-k="b" aria-label="B: back">B</button><button data-k="a" aria-label="A: select">A</button></div><span class="lb">B</span><span class="la">A</span></div>
+  <div class="ss"><div><button data-k="select" aria-label="Select"></button><span>SELECT</span></div><div><button data-k="start" aria-label="Start"></button><span>START</span></div></div>
+  <div class="grille" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <span class="phones" aria-hidden="true">&#9673; PHONES</span>
+  <span class="serial" aria-hidden="true">JANUS &middot; FIELD INSTRUMENT</span>
+ </div>
+ <p class="tape" id="tape"><span class="kbd">arrows move &middot; X = A &middot; Z = B &middot; Enter = START &middot; Shift = SELECT<br>CLI runs inside the screen · copy, paste, record</span><span class="touch">tap the buttons &middot; A picks &middot; B goes back<br>CLI runs inside the screen · copy, paste, record</span></p>
+</div>
+<script>
+/*JS*/
+</script>
+</body>
+</html>
