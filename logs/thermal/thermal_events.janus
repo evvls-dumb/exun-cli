@@ -1,8 +1,0 @@
-timestamp,device_id,cpu_temp_c,threshold_c,action
-2024-05-12T15:00:00+05:30,arcade-controller-v1,81.6,80,cpu_clock_limited
-2024-05-20T09:00:00+05:30,arcade-controller-v1,81.7,80,cpu_clock_limited
-2025-07-03T20:00:00+05:30,januspi-rpi5-16gb,85,80,cpu_clock_limited
-2026-06-10T10:00:00+05:30,januspi-rpi5-16gb,80.2,80,cpu_clock_limited
-2026-06-17T17:00:00+05:30,januspi-rpi5-16gb,85,80,cpu_clock_limited
-2026-07-03T10:00:00+05:30,januspi-rpi5-16gb,84.8,80,cpu_clock_limited
-2026-07-25T19:00:00+05:30,januspi-rpi5-16gb,80.4,80,cpu_clock_limited
