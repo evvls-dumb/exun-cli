@@ -1,0 +1,4 @@
+logs.janus in this folder was supplied in the teammate's exun-cli archive.
+It contains synthetic historical arcade records, not measurements recorded
+from an actual Raspberry Pi. It is optional demonstration material and is
+never ingested automatically by JANUS.

@@ -33,17 +33,15 @@ const inv = [3, 2, 1, 0];
 //   boot
 function syncTerm() { if (typeof Term !== 'undefined') Term.visible(scr === Term); }
 
-// the DMG boot, as the boot ROM did it: a blank panel, the logo stepping down one pixel at a time
-// with no easing (the LCD's slow response smears it), the two-note chime when it stops, a hold, then a cut.
 const Boot = {
   enter() { this.t0 = performance.now(); this.rang = false; },
   key() { home(); },
   draw(t) {
-    const e = t - this.t0, land = 64, from = -16, start = 300, step = 24; cls(0);
-    const y = Math.min(land, from + Math.max(0, ((e - start) / step) | 0)), landed = start + (land - from) * step;
-    if (e > start && e < landed + 1200) text(40, y, 'JANUS', 3, 'b', 2);
-    if (y >= land && !this.rang) { this.rang = true; SFX.boot(); }
-    if (e > landed + 1400) home();
+    const e = t - this.t0; cls(0);
+    const y = Math.min(52, -16 + Math.floor(e / 14));
+    text(40, y, 'JANUS', 3, 'b', 2);
+    if (y >= 52) { if (!this.rang) { this.rang = true; SFX.boot(); } if (e > 1300) textC(74, 'FIELD UNIT  JN-1', 2); if (e > 1600) textC(84, 'HANDHELD DEVICE', 2); }
+    if (e > 2300) home();
   },
 };
 
