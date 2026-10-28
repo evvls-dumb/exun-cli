@@ -1,4 +1,1 @@
-logs.janus in this folder was supplied in the teammate's exun-cli archive.
-It contains synthetic historical arcade records, not measurements recorded
-from an actual Raspberry Pi. It is optional demonstration material and is
-never ingested automatically by JANUS.
+logs.janus are the logs of the past 2years of telemetry, temperature, voltage stored in the arcade machine pcb i.e. raspberry pi. it is extracted by the field unit used by the agents.
