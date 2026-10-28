@@ -1,0 +1,40 @@
+{
+  "archive_version": 1,
+  "origin": "synthetically_generated_test_data",
+  "is_observed_hardware_data": false,
+  "time_zone": "Asia/Kolkata",
+  "time_coverage": {
+    "from": "2023-01-01T00:00:00+05:30",
+    "to": "2026-10-27T23:00:00+05:30"
+  },
+  "equipment_profiles": [
+    {
+      "id": "arcade-controller-v1",
+      "period": "2023-01 to 2025-02-11"
+    },
+    {
+      "id": "januspi-rpi5-16gb",
+      "period": "2025-02-12 to 2026-10"
+    }
+  ],
+  "measurement_notes": {
+    "temperature": "generated values rather than sensor samples",
+    "input_current_a_est": "estimated, not natively measured by Raspberry Pi",
+    "board_power_w_est": "computed from estimated electrical values",
+    "enclosure_ambient_c_est": "estimated; not a physical ambient sensor"
+  },
+  "data_files": {
+    "arcade/frame_timing.janus": 92,
+    "arcade/input_latency.janus": 92,
+    "arcade/sessions.janus": 199,
+    "power/power_events.janus": 43,
+    "storage/storage_monthly.janus": 46,
+    "system/boot_history.janus": 46,
+    "telemetry/telemetry_2023.janus": 8760,
+    "telemetry/telemetry_2024.janus": 8784,
+    "telemetry/telemetry_2025.janus": 8760,
+    "telemetry/telemetry_2026.janus": 7200,
+    "thermal/thermal_events.janus": 7
+  },
+  "format": ".janus files are UTF-8 comma-separated text, not binary containers"
+}
