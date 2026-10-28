@@ -1,0 +1,8 @@
+node_modules/
+*.pyc
+__pycache__/
+janus-raspberry-pi-*/
+janus-board-*/
+*.tar.gz
+*.sha256
+.DS_Store
