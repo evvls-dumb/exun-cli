@@ -4,6 +4,7 @@ const fs = require('fs'), path = require('path'), { spawnSync } = require('child
 const { Acquisition, stamp } = require('../lib/acq'), { sha256 } = require('../lib/custody');
 const PCB = require('../lib/pi');
 const pkg = require('../package.json');
+const Seal = require('../lib/seal');
 
 const HELP = `janus ${pkg.version}  Extracting logs,temperature,voltage and current over ethernet from PCB
 
@@ -23,6 +24,9 @@ const HELP = `janus ${pkg.version}  Extracting logs,temperature,voltage and curr
   janus show   <folder>                      what was collected, with hashes
   janus verify <folder> [--head HASH]        recompute every hash and the log chain
   janus pack   <folder> [file.tar.gz]        verify, then archive
+  janus pack   <folder> [file] --encrypt     verify, archive, then encrypt (.janus-enc)
+  janus unpack <file.janus-enc> [file.tar.gz] decrypt to a standard archive
+                                             passphrase from JANUS_PASSPHRASE or hidden prompt
 
   janus ui [--port 7777]                     the handheld: extraction + terminal in a browser
 
@@ -46,7 +50,7 @@ function parse(argv) {
     if (t.startsWith('--')) {
       let [k, v] = t.slice(2).split(/=(.*)/s, 2);
       if (VAL.has(k)) { if (v === undefined) { v = argv[++i]; if (v === undefined) die(2, `--${k} needs a value`); } if (MULTI.has(k)) (a.f[k] = a.f[k] || []).push(v); else a.f[k] = v; }
-      else if (['ndjson', 'quiet', 'help', 'version', 'no-open', 'no-files'].includes(k)) a.f[k] = true;
+      else if (['ndjson', 'quiet', 'help', 'version', 'no-open', 'no-files', 'encrypt'].includes(k)) a.f[k] = true;
       else die(2, `unknown option --${k}. Try: janus --help`);
     } else a._.push(t);
   }
@@ -55,6 +59,22 @@ function parse(argv) {
 }
 function die(code, msg) { process.stderr.write(msg + '\n'); process.exit(code); }
 const num = (v, name, d) => { if (v === undefined) return d; const n = Number(v); if (!Number.isFinite(n) || n < 0) die(2, `--${name} must be a number`); return n; };
+
+function askHidden(q) {
+  return new Promise((resolve) => {
+    process.stderr.write(q);
+    const stdin = process.stdin; let buf = '';
+    stdin.setRawMode(true); stdin.resume(); stdin.setEncoding('utf8');
+    const onData = (ch) => {
+      for (const c of ch) {
+        if (c === '\r' || c === '\n' || c === '\u0004') { stdin.setRawMode(false); stdin.pause(); stdin.removeListener('data', onData); process.stderr.write('\n'); return resolve(buf); }
+        if (c === '\u0003') { stdin.setRawMode(false); process.stderr.write('\n'); process.exit(130); }
+        if (c === '\u007f' || c === '\b') buf = buf.slice(0, -1); else buf += c;
+      }
+    };
+    stdin.on('data', onData);
+  });
+}
 
 let F = {};
 const say = t => (F.ndjson ? process.stderr : process.stdout).write(t + '\n');
@@ -163,12 +183,61 @@ async function main() {
   }
 
   if (cmd === 'pack') {
-    if (!sub) die(2, 'janus pack <folder> [file.tar.gz]');
+    if (!sub) die(2, 'janus pack <folder> [file.tar.gz]  [--encrypt]');
     const v = Acquisition.verify(sub); if (!v.ok) { say('Refusing to pack: verification failed.'); v.problems.forEach(p => say('  ' + p)); return 1; }
-    const dir = path.resolve(sub), out = path.resolve(rest[0] || dir + '.tar.gz'); if (fs.existsSync(out)) die(1, out + ' already exists');
-    const r = spawnSync('tar', ['-czf', out, '-C', path.dirname(dir), path.basename(dir)], { encoding: 'utf8' }); if (r.status) die(1, 'tar failed: ' + r.stderr);
+    const dir = path.resolve(sub), enc = !!a.f.encrypt;
+    let out = path.resolve(rest[0] || dir + '.tar.gz' + (enc ? '.janus-enc' : ''));
+    if (enc && !out.endsWith('.janus-enc')) out += '.janus-enc';
+    if (fs.existsSync(out)) die(1, out + ' already exists');
+    let pass = null;
+    if (enc) {
+      pass = process.env.JANUS_PASSPHRASE || '';
+      if (!pass) {
+        if (!process.stdin.isTTY || typeof process.stdin.setRawMode !== 'function') die(2, 'set JANUS_PASSPHRASE (a passphrase is never taken from the command line, where it would be visible to other users and saved in shell history)');
+        pass = await askHidden('Passphrase (min ' + Seal.MIN_PASSPHRASE + ' characters): ');
+        if (pass !== await askHidden('Repeat it: ')) die(2, 'the two passphrases differ');
+      }
+      if (pass.length < Seal.MIN_PASSPHRASE) die(2, `use a passphrase of at least ${Seal.MIN_PASSPHRASE} characters`);
+    }
+    const tarOut = enc ? out + '.tmp-' + process.pid : out;
+    const r = spawnSync('tar', ['-czf', tarOut, '-C', path.dirname(dir), path.basename(dir)], { encoding: 'utf8' });
+    if (r.status) { try { fs.unlinkSync(tarOut); } catch {} die(1, 'tar failed: ' + r.stderr); }
+    if (enc) {
+      try { fs.writeFileSync(out, Seal.seal(fs.readFileSync(tarOut), pass)); }
+      finally { try { fs.writeFileSync(tarOut, Buffer.alloc(fs.statSync(tarOut).size)); fs.unlinkSync(tarOut); } catch {} }
+    }
     const h = sha256(fs.readFileSync(out)); fs.writeFileSync(out + '.sha256', `${h}  ${path.basename(out)}\n`);
-    say(`${out}\nsha256 ${h}  (also in ${path.basename(out)}.sha256)`); emit({ event: 'pack', file: out, sha256: h, chain_head: v.head }); return 0;
+    say(`${out}\nsha256 ${h}  (also in ${path.basename(out)}.sha256)`);
+    if (enc) say('Sealed with AES-256-GCM. The passphrase is not stored anywhere: without it this file cannot be opened by anyone. Send it by a different route than the file.');
+    emit({ event: 'pack', file: out, sha256: h, chain_head: v.head, encrypted: enc }); return 0;
+  }
+  if (cmd === 'unpack') {
+    if (!sub) die(2, 'janus unpack <file.janus-enc> [file.tar.gz]');
+    const input = path.resolve(sub);
+    if (!fs.existsSync(input)) die(1, input + ' not found');
+    const output = path.resolve(rest[0] || input.replace(/\.janus-enc$/, ''));
+    if (output === input) die(2, 'choose an output .tar.gz name different from the input');
+    if (fs.existsSync(output)) die(1, output + ' already exists');
+    const data = fs.readFileSync(input);
+    if (!Seal.isSealed(data)) die(1, 'not a JANUS encrypted file');
+    const checksum = input + '.sha256';
+    if (fs.existsSync(checksum)) {
+      const expected = fs.readFileSync(checksum, 'utf8').trim().split(/\s+/)[0].toLowerCase();
+      if (expected !== sha256(data)) die(1, 'encrypted file checksum mismatch');
+    }
+    let pass = process.env.JANUS_PASSPHRASE || '';
+    if (!pass) {
+      if (!process.stdin.isTTY || typeof process.stdin.setRawMode !== 'function') die(2, 'set JANUS_PASSPHRASE or run in an interactive terminal');
+      pass = await askHidden('Passphrase: ');
+    }
+    let plain;
+    try { plain = Seal.open(data, pass); } catch (e) { die(1, e.message); }
+    fs.writeFileSync(output, plain, { flag: 'wx' });
+    const h = sha256(plain);
+    say(`${output}\nsha256 ${h}`);
+    say('Decryption succeeded. Extract the archive with tar and verify the recovered acquisition folder.');
+    emit({ event: 'unpack', file: output, sha256: h });
+    return 0;
   }
   die(2, `unknown command "${cmd}". Try: janus --help`);
 }
